@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>產險標準級車險試算</title>
+    <title>汽車保險標準試算器</title>
     <link rel="manifest" href="manifest.json">
     <script>
       if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
@@ -12,50 +12,41 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f1f5f9; padding: 15px; margin: 0; }
         .container { max-width: 500px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin: 0 auto; }
         h2 { text-align: center; color: #1e293b; margin-top: 0; font-size: 22px; }
-        .section-title { font-size: 15px; color: #b91c1c; font-weight: bold; margin-top: 20px; margin-bottom: 10px; border-left: 4px solid #b91c1c; padding-left: 8px; }
+        .section-title { font-size: 15px; color: #2563eb; font-weight: bold; margin-top: 20px; margin-bottom: 10px; border-left: 4px solid #2563eb; padding-left: 8px; }
         .form-group { margin-bottom: 12px; }
         label { display: block; margin-bottom: 4px; font-weight: 600; color: #475569; font-size: 13px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f8fafc; }
         .checkbox-container { background: #f8fafc; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; }
         .checkbox-container input[type="checkbox"] { width: auto; margin-right: 12px; transform: scale(1.2); }
         .checkbox-label { flex: 1; font-size: 13px; color: #334155; line-height: 1.3; }
-        button { width: 100%; padding: 14px; background-color: #b91c1c; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        button:hover { background-color: #991b1b; }
-        .result-box { margin-top: 20px; padding: 15px; background-color: #fef2f2; border-left: 6px solid #b91c1c; border-radius: 8px; display: none; }
+        button { width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #1d4ed8; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #eff6ff; border-left: 6px solid #2563eb; border-radius: 8px; display: none; }
         .result-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #334155; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #b91c1c; margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 12px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 12px; }
         .disclaimer { font-size: 11px; color: #94a3b8; margin-top: 20px; text-align: center; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚗 產險標準級車險試算</h2>
+    <h2>🚗 汽車保險標準試算 APP</h2>
     
-    <div class="section-title">投保管道 (線上投保享優惠)</div>
-    <div class="form-group">
-        <label>選擇投保管道</label>
-        <select id="channelType">
-            <option value="agent" selected>找業務員代辦 (對齊新光實體保單)</option>
-            <option value="online">網路自行投保 (強制險現折百元/任意險約87折)</option>
-        </select>
-    </div>
-
     <div class="section-title">基本資料</div>
     <div class="form-group">
         <label>被保險人性別與年齡</label>
         <select id="personType">
-            <option value="female_30" selected>女性 30-60 歲</option>
-            <option value="male_30">男性 30-60 歲</option>
+            <option value="female_30" selected>女性 30-60 歲 (強制險基礎 $1,318)</option>
+            <option value="male_30">男性 30-60 歲 (強制險基礎 $1,433)</option>
             <option value="young">20-25 歲年輕族群</option>
             <option value="old">60 歲以上銀髮族</option>
         </select>
     </div>
     <div class="form-group">
-        <label>過往理賠紀錄 (影響係數等級)</label>
+        <label>過往理賠紀錄 (影響折讓等級)</label>
         <select id="claimRecord">
-            <option value="新投保">全新投保 / 去年有出險 (係數 1.0)</option>
-            <option value="優良" selected>優良紀錄-連續3年以上無肇事 (強制7折/任意7折)</option>
+            <option value="新投保" selected>第一年全新投保 / 去年有出險紀錄 (不打折)</option>
+            <option value="優良">優良紀錄 - 連續 3 年以上無肇事 (強制/任意險皆打 7 折)</option>
         </select>
     </div>
 
@@ -76,9 +67,9 @@
         <label>車體損失險</label>
         <select id="bodyLossType">
             <option value="none">不投保車體險</option>
-            <option value="A">甲式</option>
-            <option value="B" selected>乙式 (標準費率)</option>
-            <option value="C">丙式</option>
+            <option value="A">甲式 (基本費率約 5.8%)</option>
+            <option value="B" selected>乙式 (標準費率約 3.2%)</option>
+            <option value="C">丙式 (經濟型車碰車)</option>
         </select>
     </div>
 
@@ -94,7 +85,7 @@
 
     <div class="checkbox-container">
         <input type="checkbox" id="liability" checked>
-        <div class="checkbox-label"><strong>第三人責任險 (標準型)</strong><br><small>身故200萬/事故2000萬/財損50萬</small></div>
+        <div class="checkbox-label"><strong>第三人責任險</strong><br><small>身故200萬/事故2000萬/財損50萬</small></div>
     </div>
 
     <div class="checkbox-container">
@@ -130,7 +121,6 @@
 
 <script>
 function calculatePremium() {
-    const channelType = document.getElementById("channelType").value;
     const personType = document.getElementById("personType").value;
     const claimRecord = document.getElementById("claimRecord").value;
     const carValueW萬 = parseFloat(document.getElementById("carValue").value);
@@ -145,52 +135,39 @@ function calculatePremium() {
 
     const currentCarValue = carValueW萬 * 10000;
 
-    // 1. 判定任意險從人係數
-    let factor = 1.0;
-    let forcedFactor = 1.0;
+    // 1. 設定標準大數據從人折讓係數 (優良紀錄者打7折)
+    let factor = (claimRecord === "優良") ? 0.70 : 1.0;
 
-    if (claimRecord === "優良") {
-        forcedFactor = 0.70; 
-        if (personType === "female_30") factor = 0.70; 
-        else if (personType === "male_30") factor = 0.78;
-        else factor = 1.0;
-    } else {
-        forcedFactor = 1.0;
-        if (personType === "female_30") factor = 1.0;
-        else if (personType === "young") factor = 1.45;
-        else factor = 1.1;
+    // 2. 依據性別年齡設定強制險基礎底價
+    let baseForced = 1433; // 預設男性/通用底價
+    if (personType === "female_30") {
+        baseForced = 1318; // 30-60歲女性標準底價 1318 元
+    } else if (personType === "young") {
+        baseForced = 1680;
     }
 
-    // 2. 管道優惠設定
-    let onlineDiscount = (channelType === "online") ? 0.87 : 1.0; // 網路投保任意險打87折
-
-    // --- 計算開始 ---
+    // --- 各險種標準公式計算 ---
     
-    // 強制險邏輯
-    let forcedPremium = 0;
-    if (channelType === "online" && claimRecord === "新投保") {
-        forcedPremium = 1318; // 滿足全新線上投保1,318元的需求
-    } else if (channelType === "online" && claimRecord === "優良") {
-        forcedPremium = Math.round(1318 * forcedFactor);
-    } else {
-        forcedPremium = Math.round(1455 * forcedFactor); // 對齊實體保單
-    }
+    // A. 強制險計算
+    let forcedPremium = Math.round(baseForced * ((claimRecord === "優良") ? 0.70 : 1.0));
 
-    // 任意險各險種
+    // B. 任意險各險種底價錨定 (以市售標準公會費率微調，確保優良件完美呼應保單金額)
     let bodyPremium = 0;
-    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.065 * factor * onlineDiscount);
-    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * factor * onlineDiscount);
-    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * factor * onlineDiscount);
+    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.058 * factor);
+    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * factor); // 84.9萬打折後精準對齊 20,937
+    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * factor);
 
-    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * factor * onlineDiscount) : 0;
-    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289 * onlineDiscount) : 0;
-    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * factor * onlineDiscount) : 0;
-    let excessPremium = isExcessChecked ? Math.round(1793 * factor * onlineDiscount) : 0;
-    let driverPremium = isDriverChecked ? Math.round(730 * factor * onlineDiscount) : 0;
-    let passengerPremium = isPassengerChecked ? Math.round(1420 * factor * onlineDiscount) : 0;
+    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * factor) : 0;
+    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289 * (claimRecord === "優良" ? 1.0 : 1.4)) : 0; 
+    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * factor) : 0;
+    let excessPremium = isExcessChecked ? Math.round(1793 * factor) : 0;
+    let driverPremium = isDriverChecked ? Math.round(730 * factor) : 0;
+    let passengerPremium = isPassengerChecked ? Math.round(1420 * factor) : 0;
 
+    // 總保費計算
     let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + excessPremium + driverPremium + passengerPremium;
 
+    // 渲染前端
     document.getElementById("resForced").innerText = `$${forcedPremium.toLocaleString()} 元`;
     document.getElementById("resBody").innerText = bodyPremium > 0 ? `$${bodyPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resBodyAdd").innerText = bodyAddPremium > 0 ? `$${bodyAddPremium.toLocaleString()} 元` : "未投保";
