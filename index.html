@@ -19,7 +19,6 @@
         .checkbox-container { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; }
         .checkbox-container input[type="checkbox"] { width: auto; margin-right: 12px; transform: scale(1.2); }
         .checkbox-label { flex: 1; font-size: 14px; color: #334155; }
-        .checkbox-price { font-size: 13px; color: #64748b; font-weight: bold; }
         button { width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
         button:hover { background-color: #1d4ed8; }
         .result-box { margin-top: 20px; padding: 15px; background-color: #eff6ff; border-left: 6px solid #2563eb; border-radius: 8px; display: none; }
@@ -38,7 +37,7 @@
         <label>被保險人性別</label>
         <select id="gender">
             <option value="male">男性</option>
-            <option value="female" selected>女性 (保費通常較優惠)</option>
+            <option value="female" selected>女性 (任意險享較優費率)</option>
         </select>
     </div>
     <div class="form-group">
@@ -46,17 +45,17 @@
         <select id="age">
             <option value="20">20-25 歲</option>
             <option value="25">25-30 歲</option>
-            <option value="30" selected>30-60 歲 (最便宜級距)</option>
+            <option value="30" selected>30-60 歲 (最穩定級距)</option>
             <option value="60">60 歲以上</option>
         </select>
     </div>
     <div class="form-group">
-        <label>過去無肇事理賠年資</label>
+        <label>過去無肇事理賠紀錄</label>
         <select id="claimRecord">
-            <option value="0">全新投保 / 去年有出險理賠</option>
-            <option value="1">連續 1 年無肇事 (減費18%)</option>
-            <option value="2">連續 2 年無肇事 (減費26%)</option>
-            <option value="3" selected>連續 3 年以上無肇事 (減費36%)</option>
+            <option value="0" selected>全新投保 / 去年有出險紀錄 (強制險 $1,318)</option>
+            <option value="1">連續 1 年無肇事 (強制險減費 18%, 任意險減費 18%)</option>
+            <option value="2">連續 2 年無肇事 (強制險減費 26%, 任意險減費 26%)</option>
+            <option value="3">連續 3 年以上無肇事 (強制險最低減費 30%, 任意險減費 36%)</option>
         </select>
     </div>
 
@@ -80,7 +79,7 @@
     
     <div class="checkbox-container">
         <input type="checkbox" id="forced" checked disabled>
-        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>政府規定必保 (身故200萬/體傷20萬)</small></div>
+        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>新投保基礎費率 $1,318 (身故200萬/體傷20萬)</small></div>
     </div>
 
     <div class="form-group">
@@ -127,7 +126,7 @@
     </div>
 
     <div class="disclaimer">
-        * 本程式採用市面大數據平均費率公式估算。車體與竊盜險已引入車價折舊邏輯。實際保費仍須以各產險公司核保、串接關貿系統之金額為準。
+        * 本程式採用市面大數據平均費率公式估算。新投保車輛強制險不分年齡性別均以 $1,318 基礎計算。實際保費仍須以各產險公司核保、串接關貿系統之金額為準。
     </div>
 </div>
 
@@ -153,47 +152,52 @@ function calculatePremium() {
     else if (carAge === 3) depreciation = 0.42;
     else if (carAge === 5) depreciation = 0.25;
     
-    const currentCarValue = carValueW萬 * 10000 * depreciation; // 折舊後台幣價值
+    const currentCarValue = carValueW萬 * 10000 * depreciation; 
 
-    // 2. 判定從人係數 (第三人、車體險共用)
+    // 2. 判定任意險從人係數 (第三人、車體險共用)
     let ageGenderFactor = 1.0;
     if (age === 20) ageGenderFactor = (gender === "male") ? 1.4 : 1.2;
     else if (age === 25) ageGenderFactor = (gender === "male") ? 1.15 : 1.0;
-    else if (age === 30) ageGenderFactor = (gender === "male") ? 1.0 : 0.90;
+    else if (age === 30) ageGenderFactor = (gender === "male") ? 1.0 : 0.90; // 任意險 30-60歲女性享有優待
     else if (age === 60) ageGenderFactor = (gender === "male") ? 1.1 : 1.0;
 
-    // 3. 賠款紀錄減費係數
-    let claimFactor = 1.0;
-    if (claimRecord === 1) claimFactor = 0.82;
-    else if (claimRecord === 2) claimFactor = 0.74;
-    else if (claimRecord === 3) claimFactor = 0.64;
+    // 3. 任意險賠款紀錄減費係數
+    let arbitraryClaimFactor = 1.0;
+    if (claimRecord === 1) arbitraryClaimFactor = 0.82;
+    else if (claimRecord === 2) arbitraryClaimFactor = 0.74;
+    else if (claimRecord === 3) arbitraryClaimFactor = 0.64;
 
     // --- 各險種精算公式 ---
     
-    // A. 強制險
-    let forcedPremium = (gender === "male") ? 1318 : 1211;
-    if (age === 20 || age === 60) forcedPremium += 150;
+    // A. 強制險公式修正：初次投保一律為 1,318 元基礎，後續依無肇事紀錄享減費優待 (最高減費30%)
+    const BASE_FORCED = 1318;
+    let forcedClaimFactor = 1.0;
+    if (claimRecord === 1) forcedClaimFactor = 0.82;      // 減費 18%
+    else if (claimRecord === 2) forcedClaimFactor = 0.74;      // 減費 26%
+    else if (claimRecord === 3) forcedClaimFactor = 0.70;      // 減費 30% (強制險法定減費上限約為30%)
+    
+    let forcedPremium = Math.round(BASE_FORCED * forcedClaimFactor);
 
-    // B. 車體損失險 (費率依 甲 > 乙 > 丙 計算，且直接乘以折舊後車價)
+    // B. 車體損失險 (費率依 甲 > 乙 > 丙 計算，直接乘以折舊後車價與任意險係數)
     let bodyPremium = 0;
     if (bodyLossType === "A") {
-        bodyPremium = Math.round(currentCarValue * 0.035 * ageGenderFactor * claimFactor); // 甲式費率高
+        bodyPremium = Math.round(currentCarValue * 0.035 * ageGenderFactor * arbitraryClaimFactor); 
     } else if (bodyLossType === "B") {
-        bodyPremium = Math.round(currentCarValue * 0.018 * ageGenderFactor * claimFactor); // 乙式費率中
+        bodyPremium = Math.round(currentCarValue * 0.018 * ageGenderFactor * arbitraryClaimFactor); 
     } else if (bodyLossType === "C") {
-        bodyPremium = Math.round(currentCarValue * 0.006 * ageGenderFactor * claimFactor); // 丙式最便宜
+        bodyPremium = Math.round(currentCarValue * 0.006 * ageGenderFactor * arbitraryClaimFactor); 
     }
 
-    // C. 第三人責任險 (身故300萬/財損50萬基本費率約 3500)
-    let liabilityPremium = isLiabilityChecked ? Math.round(3500 * ageGenderFactor * claimFactor) : 0;
+    // C. 第三人責任險 (身故300萬/事故600萬/財損50萬 基本費率約 3500)
+    let liabilityPremium = isLiabilityChecked ? Math.round(3500 * ageGenderFactor * arbitraryClaimFactor) : 0;
 
     // D. 乘客險 (4人座，通常為固定費率約 1200)
     let passengerPremium = isPassengerChecked ? 1200 : 0;
 
-    // E. 駕駛險 (單人固定費率約 800)
+    // F. 駕駛險 (單人固定費率約 800)
     let driverPremium = isDriverChecked ? 800 : 0;
 
-    // F. 竊盜險 (基本費率約為折舊後車價的 0.25%)
+    // G. 竊盜險 (基本費率約為折舊後車價的 0.25%)
     let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.0025) : 0;
 
     // 總保費計算
