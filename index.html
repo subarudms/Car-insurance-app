@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>精算版車險保費試算器</title>
+    <title>產險標準級車險試算</title>
     <link rel="manifest" href="manifest.json">
     <script>
       if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
@@ -32,20 +32,29 @@
 <div class="container">
     <h2>🚗 產險標準級車險試算</h2>
     
+    <div class="section-title">投保管道 (線上投保享優惠)</div>
+    <div class="form-group">
+        <label>選擇投保管道</label>
+        <select id="channelType">
+            <option value="agent" selected>找業務員代辦 (對齊新光實體保單)</option>
+            <option value="online">網路自行投保 (強制險現折百元/任意險約87折)</option>
+        </select>
+    </div>
+
     <div class="section-title">基本資料</div>
     <div class="form-group">
         <label>被保險人性別與年齡</label>
         <select id="personType">
-            <option value="female_30" selected>女性 30-60 歲 (最優惠級距)</option>
+            <option value="female_30" selected>女性 30-60 歲</option>
             <option value="male_30">男性 30-60 歲</option>
-            <option value="young">20-25 歲年輕族群 (風險係數高)</option>
+            <option value="young">20-25 歲年輕族群</option>
             <option value="old">60 歲以上銀髮族</option>
         </select>
     </div>
     <div class="form-group">
-        <label>過往理賠紀錄 (強制/任意險等級)</label>
+        <label>過往理賠紀錄 (影響係數等級)</label>
         <select id="claimRecord">
-            <option value="新投保">全新投保 / 去年有出險 (無減費)</option>
+            <option value="新投保">全新投保 / 去年有出險 (係數 1.0)</option>
             <option value="優良" selected>優良紀錄-連續3年以上無肇事 (強制7折/任意7折)</option>
         </select>
     </div>
@@ -53,62 +62,54 @@
     <div class="section-title">車籍資料</div>
     <div class="form-group">
         <label>新車購置價格 (萬元)</label>
-        <input type="number" id="carValue" value="84.9" step="0.1" min="10" max="1000">
-    </div>
-    <div class="form-group">
-        <label>車齡折舊</label>
-        <select id="carAge">
-            <option value="0" selected>新車 (保額 100%)</option>
-            <option value="1">1 年車 (保額折舊 25%)</option>
-            <option value="2">2 年車 (保額折舊 44%)</option>
-        </select>
+        <input type="number" id="carValue" value="84.9" step="0.1">
     </div>
 
-    <div class="section-title">選擇投保險種 (完全對齊真實保單)</div>
+    <div class="section-title">選擇投保險種</div>
     
     <div class="checkbox-container">
         <input type="checkbox" id="forced" checked disabled>
-        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>法定基礎費率調校 (身故200萬/體傷20萬)</small></div>
+        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>身故200萬/體傷20萬</small></div>
     </div>
 
     <div class="form-group">
         <label>車體損失險</label>
         <select id="bodyLossType">
             <option value="none">不投保車體險</option>
-            <option value="A">甲式 (基本費率約 6.5%)</option>
-            <option value="B" selected>乙式 (標準費率約 3.52%)</option>
-            <option value="C">丙式 (車碰車費率約 0.9%)</option>
+            <option value="A">甲式</option>
+            <option value="B" selected>乙式 (標準費率)</option>
+            <option value="C">丙式</option>
         </select>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="bodyLossAdd" checked>
-        <div class="checkbox-label"><strong>車體險附加條款</strong><br><small>全損免折舊 + 許可使用免追償條款</small></div>
+        <div class="checkbox-label"><strong>車體險附加條款</strong><br><small>全損免折舊 + 免追償條款</small></div>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="theft" checked>
-        <div class="checkbox-label"><strong>汽車竊盜損失險 + 免折舊</strong><br><small>費率 0.258% + 附加全損免折舊</small></div>
+        <div class="checkbox-label"><strong>汽車竊盜損失險 + 免折舊</strong></div>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="liability" checked>
-        <div class="checkbox-label"><strong>第三人責任險 (標準型)</strong><br><small>每人傷亡 200 萬 / 每事故 2000 萬 / 財損 50 萬</small></div>
+        <div class="checkbox-label"><strong>第三人責任險 (標準型)</strong><br><small>身故200萬/事故2000萬/財損50萬</small></div>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="excess" checked>
-        <div class="checkbox-label"><strong>第三人超額責任險 (1000萬)</strong><br><small>不含本車乘客，保障超跑路過事故</small></div>
+        <div class="checkbox-label"><strong>第三人超額責任險 (1000萬)</strong></div>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="driver" checked>
-        <div class="checkbox-label"><strong>駕駛人傷害險 (含醫療實支實付)</strong><br><small>身故200萬 + 醫療住院實支實付 10 萬</small></div>
+        <div class="checkbox-label"><strong>駕駛人傷害險 (含醫療10萬)</strong></div>
     </div>
 
     <div class="checkbox-container">
         <input type="checkbox" id="passenger" checked>
-        <div class="checkbox-label"><strong>乘客體傷責任險</strong><br><small>每一人 200 萬 / 每一事故總額 600 萬</small></div>
+        <div class="checkbox-label"><strong>乘客體傷責任險 (200萬/600萬)</strong></div>
     </div>
 
     <button onclick="calculatePremium()">開始精算保費</button>
@@ -117,7 +118,7 @@
         <h3>📊 精算保費明細</h3>
         <div class="result-item"><span>1. 強制汽車責任險</span><span id="resForced">$0</span></div>
         <div class="result-item"><span>2. 車體損失險 (主險)</span><span id="resBody">$0</span></div>
-        <div class="result-item"><span>3. 車體險附加條款 (免折舊/免追償)</span><span id="resBodyAdd">$0</span></div>
+        <div class="result-item"><span>3. 車體險附加條款</span><span id="resBodyAdd">$0</span></div>
         <div class="result-item"><span>4. 汽車竊盜損失險 (含免折舊)</span><span id="resTheft">$0</span></div>
         <div class="result-item"><span>5. 第三人責任險 (體傷+財損)</span><span id="resLiability">$0</span></div>
         <div class="result-item"><span>6. 第三人超額責任險 (1000萬)</span><span id="resExcess">$0</span></div>
@@ -125,19 +126,14 @@
         <div class="result-item"><span>8. 乘客體傷責任險</span><span id="resPassenger">$0</span></div>
         <div class="total-row"><span>預估年度總保費</span><span id="resTotal">$0</span></div>
     </div>
-
-    <div class="disclaimer">
-        * 本試算已依據新光產險標準費率進行精準錨定。實際保費因各家產險公司(如富邦、國泰)基本點數與線上投保折扣不同，仍可能有些微數百元誤差。
-    </div>
 </div>
 
 <script>
 function calculatePremium() {
-    // 讀取輸入
+    const channelType = document.getElementById("channelType").value;
     const personType = document.getElementById("personType").value;
     const claimRecord = document.getElementById("claimRecord").value;
     const carValueW萬 = parseFloat(document.getElementById("carValue").value);
-    const carAge = parseInt(document.getElementById("carAge").value);
     
     const bodyLossType = document.getElementById("bodyLossType").value;
     const isBodyLossAddChecked = document.getElementById("bodyLossAdd").checked;
@@ -147,63 +143,54 @@ function calculatePremium() {
     const isDriverChecked = document.getElementById("driver").checked;
     const isPassengerChecked = document.getElementById("passenger").checked;
 
-    // 1. 車輛殘值折舊計算
-    let depreciation = 1.0;
-    if (carAge === 1) depreciation = 0.75;
-    else if (carAge === 2) depreciation = 0.56;
-    const currentCarValue = carValueW萬 * 10000 * depreciation;
+    const currentCarValue = carValueW萬 * 10000;
 
-    // 2. 核心大數據係數錨定 (以30-60歲優良女性為標準 0.7)
+    // 1. 判定任意險從人係數
     let factor = 1.0;
     let forcedFactor = 1.0;
 
     if (claimRecord === "優良") {
-        forcedFactor = 0.70; // 強制險等級1，打7折
-        if (personType === "female_30") factor = 0.70; // 完美對齊任意險-0.30條款
+        forcedFactor = 0.70; 
+        if (personType === "female_30") factor = 0.70; 
         else if (personType === "male_30") factor = 0.78;
         else factor = 1.0;
     } else {
-        // 新投保
         forcedFactor = 1.0;
         if (personType === "female_30") factor = 1.0;
         else if (personType === "young") factor = 1.45;
         else factor = 1.1;
     }
 
-    // --- 錨定新光產險標準公式計算 ---
+    // 2. 管道優惠設定
+    let onlineDiscount = (channelType === "online") ? 0.87 : 1.0; // 網路投保任意險打87折
+
+    // --- 計算開始 ---
     
-    // A. 強制險 (標準基本費率 1455 元)
-    let forcedPremium = Math.round(1455 * forcedFactor);
+    // 強制險邏輯
+    let forcedPremium = 0;
+    if (channelType === "online" && claimRecord === "新投保") {
+        forcedPremium = 1318; // 滿足全新線上投保1,318元的需求
+    } else if (channelType === "online" && claimRecord === "優良") {
+        forcedPremium = Math.round(1318 * forcedFactor);
+    } else {
+        forcedPremium = Math.round(1455 * forcedFactor); // 對齊實體保單
+    }
 
-    // B. 車體主險 (標準乙式費率 3.524%)
+    // 任意險各險種
     let bodyPremium = 0;
-    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.065 * factor);
-    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * factor); // 精準錨定 $20,937
-    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * factor);
+    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.065 * factor * onlineDiscount);
+    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * factor * onlineDiscount);
+    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * factor * onlineDiscount);
 
-    // C. 車體附加險 (免折舊 $366 + 免追償 $1036 = $1,402)
-    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * factor) : 0;
+    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * factor * onlineDiscount) : 0;
+    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289 * onlineDiscount) : 0;
+    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * factor * onlineDiscount) : 0;
+    let excessPremium = isExcessChecked ? Math.round(1793 * factor * onlineDiscount) : 0;
+    let driverPremium = isDriverChecked ? Math.round(730 * factor * onlineDiscount) : 0;
+    let passengerPremium = isPassengerChecked ? Math.round(1420 * factor * onlineDiscount) : 0;
 
-    // D. 竊盜險與免折舊 (費率 0.258% + 免折舊大約共 0.289%)
-    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289) : 0; // 精準錨定 $2,193 + $263 = $2,456
-
-    // E. 第三人責任險 (體傷200萬/2000萬 $1,642 + 財損50萬 $2,371 = $4,013 元)
-    // 經計算，保單呈現之原始底價為 5,733 元，打 7 折後即為 $4,013
-    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * factor) : 0;
-
-    // F. 超額責任險 1000萬 (保單實收 $1,255)
-    let excessPremium = isExcessChecked ? Math.round(1793 * factor) : 0;
-
-    // G. 駕駛人傷害險 (身故 $481 + 實支實付 $30 = $511)
-    let driverPremium = isDriverChecked ? Math.round(730 * factor) : 0;
-
-    // H. 乘客責任險 200萬 (保單實收 $994)
-    let passengerPremium = isPassengerChecked ? Math.round(1420 * factor) : 0;
-
-    // 總保費計算
     let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + excessPremium + driverPremium + passengerPremium;
 
-    // 渲染前端
     document.getElementById("resForced").innerText = `$${forcedPremium.toLocaleString()} 元`;
     document.getElementById("resBody").innerText = bodyPremium > 0 ? `$${bodyPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resBodyAdd").innerText = bodyAddPremium > 0 ? `$${bodyAddPremium.toLocaleString()} 元` : "未投保";
