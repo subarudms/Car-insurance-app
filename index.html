@@ -1,155 +1,215 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head><link rel="manifest" href="manifest.json">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
-
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>車險保費簡易試算器</title>
+    <title>專業版車險保費試算器</title>
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+    </script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .container { max-width: 500px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0px 0px 15px rgba(0,0,0,0.1); margin: 0 auto; }
-        h2 { text-align: center; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f1f5f9; padding: 15px; margin: 0; }
+        .container { max-width: 500px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin: 0 auto; }
+        h2 { text-align: center; color: #1e293b; margin-top: 0; font-size: 24px; }
+        .section-title { font-size: 16px; color: #2563eb; font-weight: bold; margin-top: 20px; margin-bottom: 10px; border-left: 4px solid #2563eb; padding-left: 8px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        select, input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .checkbox-group { margin-top: 5px; }
-        button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; }
-        button:hover { background-color: #45a049; }
-        .result-box { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-left: 6px solid #2196F3; display: none; }
-        .disclaimer { font-size: 12px; color: #888; margin-top: 15px; text-align: center; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #475569; font-size: 14px; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 15px; background-color: #f8fafc; }
+        .checkbox-container { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; }
+        .checkbox-container input[type="checkbox"] { width: auto; margin-right: 12px; transform: scale(1.2); }
+        .checkbox-label { flex: 1; font-size: 14px; color: #334155; }
+        .checkbox-price { font-size: 13px; color: #64748b; font-weight: bold; }
+        button { width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #eff6ff; border-left: 6px solid #2563eb; border-radius: 8px; display: none; }
+        .result-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #334155; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #dc2626; margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 12px; }
+        .disclaimer { font-size: 11px; color: #94a3b8; margin-top: 20px; text-align: center; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚗 車險保費簡易試算器</h2>
+    <h2>🚗 專業版車險試算 APP</h2>
     
+    <div class="section-title">基本資料 (計算基本係數)</div>
     <div class="form-group">
-        <label for="gender">被保險人性別：</label>
+        <label>被保險人性別</label>
         <select id="gender">
             <option value="male">男性</option>
-            <option value="female">女性</option>
+            <option value="female" selected>女性 (保費通常較優惠)</option>
         </select>
     </div>
-
     <div class="form-group">
-        <label for="age">被保險人年齡：</label>
-        <input type="number" id="age" value="35" min="18" max="100">
+        <label>被保險人年齡</label>
+        <select id="age">
+            <option value="20">20-25 歲</option>
+            <option value="25">25-30 歲</option>
+            <option value="30" selected>30-60 歲 (最便宜級距)</option>
+            <option value="60">60 歲以上</option>
+        </select>
     </div>
-
     <div class="form-group">
-        <label for="claimRecord">過去無肇事理賠紀錄：</label>
+        <label>過去無肇事理賠年資</label>
         <select id="claimRecord">
-            <option value="0">新投保 / 去年有出險理賠</option>
-            <option value="1">連續 1 年無肇事</option>
-            <option value="2">連續 2 年無肇事</option>
-            <option value="3">連續 3 年以上無肇事</option>
+            <option value="0">全新投保 / 去年有出險理賠</option>
+            <option value="1">連續 1 年無肇事 (減費18%)</option>
+            <option value="2">連續 2 年無肇事 (減費26%)</option>
+            <option value="3" selected>連續 3 年以上無肇事 (減費36%)</option>
         </select>
     </div>
 
+    <div class="section-title">車籍資料 (影響車體/竊盜險)</div>
     <div class="form-group">
-        <label>選擇投保項目（可多選）：</label>
-        <div class="checkbox-group">
-            <input type="checkbox" id="forced" checked disabled> <label style="display:inline;" for="forced">強制險 (政府規定必保)</label><br><br>
-            <input type="checkbox" id="liability" checked> <label style="display:inline;" for="liability">第三人責任險 (體傷300萬/財損50萬)</label><br><br>
-            <input type="checkbox" id="excess"> <label style="display:inline;" for="excess">超額責任險 (1000萬)</label><br><br>
-            <input type="checkbox" id="bodyLoss"> <label style="display:inline;" for="bodyLoss">車體損失險 (丙式-車碰車)</label>
-        </div>
+        <label>新車購置價格 (萬元)</label>
+        <input type="number" id="carValue" value="100" min="20" max="1000">
+    </div>
+    <div class="form-group">
+        <label>車齡 (折舊計算)</label>
+        <select id="carAge">
+            <option value="0">新車 (無折舊)</option>
+            <option value="1">1 年車 (折舊 25%)</option>
+            <option value="2">2 年車 (折舊 44%)</option>
+            <option value="3">3 年車 (折舊 58%)</option>
+            <option value="5">5 年以上老車</option>
+        </select>
     </div>
 
-    <button onclick="calculatePremium()">開始試算保費</button>
+    <div class="section-title">選擇投保險種</div>
+    
+    <div class="checkbox-container">
+        <input type="checkbox" id="forced" checked disabled>
+        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>政府規定必保 (身故200萬/體傷20萬)</small></div>
+    </div>
+
+    <div class="form-group">
+        <label>車體損失險</label>
+        <select id="bodyLossType">
+            <option value="none">不投保車體險</option>
+            <option value="A">甲式 (保障最全，含不明原因刮損)</option>
+            <option value="B" selected>乙式 (常見，車碰車、火災、拋擲物)</option>
+            <option value="C">丙式 (最經濟，僅限車碰車)</option>
+        </select>
+    </div>
+
+    <div class="checkbox-container">
+        <input type="checkbox" id="liability" checked>
+        <div class="checkbox-label"><strong>第三人責任險 (超值型)</strong><br><small>每人身故300萬/每事故傷亡600萬/財損50萬</small></div>
+    </div>
+
+    <div class="checkbox-container">
+        <input type="checkbox" id="passenger" checked>
+        <div class="checkbox-label"><strong>乘客傷害責任險</strong><br><small>每人身故 300 萬 (一車以4人計)</small></div>
+    </div>
+
+    <div class="checkbox-container">
+        <input type="checkbox" id="driver" checked>
+        <div class="checkbox-label"><strong>駕駛人傷害險</strong><br><small>住院日額2000元/身故死亡300萬</small></div>
+    </div>
+
+    <div class="checkbox-container">
+        <input type="checkbox" id="theft" checked>
+        <div class="checkbox-label"><strong>汽車竊盜損失險</strong><br><small>車輛失竊賠償 (依折舊後保額計算)</small></div>
+    </div>
+
+    <button onclick="calculatePremium()">開始專業試算</button>
 
     <div id="result" class="result-box">
-        <h3>試算結果明細：</h3>
-        <p id="detailForced"></p>
-        <p id="detailLiability"></p>
-        <p id="detailExcess"></p>
-        <p id="detailBodyLoss"></p>
-        <hr>
-        <h4 id="totalAmount" style="color: #d9534f; margin: 0;"></h4>
+        <h3>📊 試算保費明細</h3>
+        <div class="result-item"><span>1. 強制汽車責任險</span><span id="resForced">$0</span></div>
+        <div class="result-item"><span>2. 車體損失險</span><span id="resBody">$0</span></div>
+        <div class="result-item"><span>3. 第三人責任險</span><span id="resLiability">$0</span></div>
+        <div class="result-item"><span>4. 乘客傷害責任險</span><span id="resPassenger">$0</span></div>
+        <div class="result-item"><span>5. 駕駛人傷害險</span><span id="resDriver">$0</span></div>
+        <div class="result-item"><span>6. 汽車竊盜損失險</span><span id="resTheft">$0</span></div>
+        <div class="total-row"><span>預估年度總保費</span><span id="resTotal">$0</span></div>
     </div>
 
     <div class="disclaimer">
-        * 本畫面之試算結果僅供參考，實際保費仍須以產險公司核保、串接關貿系統查詢之金額為準。
+        * 本程式採用市面大數據平均費率公式估算。車體與竊盜險已引入車價折舊邏輯。實際保費仍須以各產險公司核保、串接關貿系統之金額為準。
     </div>
 </div>
 
-</body>
-</html>
 <script>
 function calculatePremium() {
-    // 1. 讀取使用者輸入的資料
+    // 讀取輸入
     const gender = document.getElementById("gender").value;
     const age = parseInt(document.getElementById("age").value);
     const claimRecord = parseInt(document.getElementById("claimRecord").value);
+    const carValueW萬 = parseFloat(document.getElementById("carValue").value);
+    const carAge = parseInt(document.getElementById("carAge").value);
     
+    const bodyLossType = document.getElementById("bodyLossType").value;
     const isLiabilityChecked = document.getElementById("liability").checked;
-    const isExcessChecked = document.getElementById("excess").checked;
-    const isBodyLossChecked = document.getElementById("bodyLoss").checked;
+    const isPassengerChecked = document.getElementById("passenger").checked;
+    const isDriverChecked = document.getElementById("driver").checked;
+    const isTheftChecked = document.getElementById("theft").checked;
 
-    // 2. 定義基本保費 (底價)
-    const BASE_FORCED_MALE = 1318;      // 強制險男性基本
-    const BASE_FORCED_FEMALE = 1211;    // 強制險女性基本
-    const BASE_LIABILITY = 3200;        // 第三人責任險基本
-    const BASE_EXCESS = 1500;           // 超額責任險固定基本
-    const BASE_BODY_LOSS = 6000;        // 丙式車體險估算底價
+    // 1. 計算折舊後的剩餘車價 (車體險與竊盜險的真實保額基礎)
+    let depreciation = 1.0;
+    if (carAge === 1) depreciation = 0.75;
+    else if (carAge === 2) depreciation = 0.56;
+    else if (carAge === 3) depreciation = 0.42;
+    else if (carAge === 5) depreciation = 0.25;
+    
+    const currentCarValue = carValueW萬 * 10000 * depreciation; // 折舊後台幣價值
 
-    // 3. 根據年齡與性別判定「第三人責任險」的從人係數
-    let ageGenderFactor = 1.0; // 預設基準值
+    // 2. 判定從人係數 (第三人、車體險共用)
+    let ageGenderFactor = 1.0;
+    if (age === 20) ageGenderFactor = (gender === "male") ? 1.4 : 1.2;
+    else if (age === 25) ageGenderFactor = (gender === "male") ? 1.15 : 1.0;
+    else if (age === 30) ageGenderFactor = (gender === "male") ? 1.0 : 0.90;
+    else if (age === 60) ageGenderFactor = (gender === "male") ? 1.1 : 1.0;
 
-    if (age < 20) {
-        ageGenderFactor = (gender === "male") ? 1.5 : 1.3;
-    } else if (age >= 20 && age < 25) {
-        ageGenderFactor = (gender === "male") ? 1.3 : 1.15;
-    } else if (age >= 25 && age < 30) {
-        ageGenderFactor = (gender === "male") ? 1.15 : 1.0;
-    } else if (age >= 30 && age < 60) {
-        ageGenderFactor = (gender === "male") ? 1.0 : 0.90; // 30~60歲女性最便宜
-    } else {
-        ageGenderFactor = (gender === "male") ? 1.1 : 1.0;
-    }
-
-    // 4. 根據勾選的無肇事紀錄判定「賠款紀錄係數」
+    // 3. 賠款紀錄減費係數
     let claimFactor = 1.0;
-    switch(claimRecord) {
-        case 1: claimFactor = 0.82; break; // 打 82 折
-        case 2: claimFactor = 0.74; break; // 打 74 折
-        case 3: claimFactor = 0.64; break; // 最低打 64 折
-        default: claimFactor = 1.0;        // 無折扣
+    if (claimRecord === 1) claimFactor = 0.82;
+    else if (claimRecord === 2) claimFactor = 0.74;
+    else if (claimRecord === 3) claimFactor = 0.64;
+
+    // --- 各險種精算公式 ---
+    
+    // A. 強制險
+    let forcedPremium = (gender === "male") ? 1318 : 1211;
+    if (age === 20 || age === 60) forcedPremium += 150;
+
+    // B. 車體損失險 (費率依 甲 > 乙 > 丙 計算，且直接乘以折舊後車價)
+    let bodyPremium = 0;
+    if (bodyLossType === "A") {
+        bodyPremium = Math.round(currentCarValue * 0.035 * ageGenderFactor * claimFactor); // 甲式費率高
+    } else if (bodyLossType === "B") {
+        bodyPremium = Math.round(currentCarValue * 0.018 * ageGenderFactor * claimFactor); // 乙式費率中
+    } else if (bodyLossType === "C") {
+        bodyPremium = Math.round(currentCarValue * 0.006 * ageGenderFactor * claimFactor); // 丙式最便宜
     }
 
-    // 5. 開始計算各險種保費
-    // 強制險 (簡單分類)
-    let forcedPremium = (gender === "male") ? BASE_FORCED_MALE : BASE_FORCED_FEMALE;
-    // 如果大於60歲或小於25歲，強制險微幅調整
-    if (age < 25 || age > 60) forcedPremium += 150;
+    // C. 第三人責任險 (身故300萬/財損50萬基本費率約 3500)
+    let liabilityPremium = isLiabilityChecked ? Math.round(3500 * ageGenderFactor * claimFactor) : 0;
 
-    // 第三人責任險 = 基本保費 * 年齡性別係數 * 肇事係數
-    let liabilityPremium = isLiabilityChecked ? Math.round(BASE_LIABILITY * ageGenderFactor * claimFactor) : 0;
+    // D. 乘客險 (4人座，通常為固定費率約 1200)
+    let passengerPremium = isPassengerChecked ? 1200 : 0;
 
-    // 超額責任險 = 基本保費 * 肇事係數 (通常不看性別年齡，只看肇事紀錄)
-    let excessPremium = isExcessChecked ? Math.round(BASE_EXCESS * claimFactor) : 0;
+    // E. 駕駛險 (單人固定費率約 800)
+    let driverPremium = isDriverChecked ? 800 : 0;
 
-    // 車體險 = 基本保費 * 肇事係數 (簡化邏輯)
-    let bodyLossPremium = isBodyLossChecked ? Math.round(BASE_BODY_LOSS * claimFactor) : 0;
+    // F. 竊盜險 (基本費率約為折舊後車價的 0.25%)
+    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.0025) : 0;
 
-    // 總保費累加
-    let totalPremium = forcedPremium + liabilityPremium + excessPremium + bodyLossPremium;
+    // 總保費計算
+    let totalPremium = forcedPremium + bodyPremium + liabilityPremium + passengerPremium + driverPremium + theftPremium;
 
-    // 6. 將結果渲染到網頁上
-    document.getElementById("detailForced").innerText = `1. 強制汽車責任險：$${forcedPremium.toLocaleString()} 元`;
-    document.getElementById("detailLiability").innerText = isLiabilityChecked ? `2. 第三人責任險：$${liabilityPremium.toLocaleString()} 元 (係數: ${ageGenderFactor} * ${claimFactor})` : `2. 第三人責任險：未投保`;
-    document.getElementById("detailExcess").innerText = isExcessChecked ? `3. 超額責任險 (1000萬)：$${excessPremium.toLocaleString()} 元` : `3. 超額責任險：未投保`;
-    document.getElementById("detailBodyLoss").innerText = isBodyLossChecked ? `4. 丙式車體損失險：$${bodyLossPremium.toLocaleString()} 元` : `4. 車體損失險：未投保`;
-    
-    document.getElementById("totalAmount").innerText = `預估總保費：$${totalPremium.toLocaleString()} 元 / 年`;
-    
-    // 顯示結果區塊
+    // 渲染到前端畫面上
+    document.getElementById("resForced").innerText = `$${forcedPremium.toLocaleString()} 元`;
+    document.getElementById("resBody").innerText = bodyPremium > 0 ? `$${bodyPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resLiability").innerText = liabilityPremium > 0 ? `$${liabilityPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resPassenger").innerText = passengerPremium > 0 ? `$${passengerPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resDriver").innerText = driverPremium > 0 ? `$${driverPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resTheft").innerText = theftPremium > 0 ? `$${theftPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resTotal").innerText = `$${totalPremium.toLocaleString()} 元`;
+
     document.getElementById("result").style.display = "block";
 }
 </script>
+</body>
+</html>
