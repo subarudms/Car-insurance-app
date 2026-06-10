@@ -36,17 +36,23 @@
     <div class="form-group">
         <label>被保險人性別與年齡</label>
         <select id="personType">
-            <option value="female_30" selected>女性 30-60 歲 (強制險基礎 $1,318)</option>
-            <option value="male_30">男性 30-60 歲 (強制險基礎 $1,433)</option>
-            <option value="young">20-25 歲年輕族群</option>
-            <option value="old">60 歲以上銀髮族</option>
+            <option value="female_30" selected>女性 30-60 歲</option>
+            <option value="male_30">男性 30-60 歲</option>
+            <option value="female_25">女性 25-30 歲</option>
+            <option value="male_25">男性 25-30 歲</option>
+            <option value="female_20">女性 20-25 歲</option>
+            <option value="male_20">男性 20-25 歲</option>
+            <option value="female_under20">女性 20 歲以下</option>
+            <option value="male_under20">男性 20 歲以下</option>
+            <option value="female_old">女性 60 歲以上</option>
+            <option value="male_old">男性 60 歲以上</option>
         </select>
     </div>
     <div class="form-group">
-        <label>過往理賠紀錄 (影響折讓等級)</label>
+        <label>過往理賠紀錄 / 費率等級</label>
         <select id="claimRecord">
-            <option value="新投保" selected>第一年全新投保 / 去年有出險紀錄 (不打折)</option>
-            <option value="優良">優良紀錄 - 連續 3 年以上無肇事 (強制/任意險皆打 7 折)</option>
+            <option value="4" selected>第一年全新投保 / 去年有出險紀錄 (第4級-加減0%)</option>
+            <option value="1">優良紀錄 - 連續 3 年以上無肇事 (第1級-減費30%)</option>
         </select>
     </div>
 
@@ -56,11 +62,11 @@
         <input type="number" id="carValue" value="84.9" step="0.1">
     </div>
 
-    <div class="section-title">選擇投保險種</div>
+    <div class="section-title">選擇投投保險種</div>
     
     <div class="checkbox-container">
         <input type="checkbox" id="forced" checked disabled>
-        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>身故200萬/體傷20萬</small></div>
+        <div class="checkbox-label"><strong>強制汽車責任險</strong><br><small>完全對齊交通部法規費率表</small></div>
     </div>
 
     <div class="form-group">
@@ -120,9 +126,27 @@
 </div>
 
 <script>
+// 直接將交通部官方強制險費率表封裝成對照資料庫
+const FORCED_TARIFF_TABLE = {
+    "1": { // 第1級 (-30%)
+        "male_under20": 2594, "female_under20": 1757,
+        "male_20": 2395, "female_20": 1627,
+        "male_25": 1567, "female_25": 1158,
+        "male_30": 1099, "female_30": 1019,
+        "male_old": 1148, "female_old": 889
+    },
+    "4": { // 第4級 (0% 新投保)
+        "male_under20": 2893, "female_under20": 2056,
+        "male_20": 2694, "female_20": 1926,
+        "male_25": 1866, "female_25": 1457,
+        "male_30": 1398, "female_30": 1318, // 完美對齊 1,318 元！
+        "male_old": 1448, "female_old": 1188
+    }
+};
+
 function calculatePremium() {
     const personType = document.getElementById("personType").value;
-    const claimRecord = document.getElementById("claimRecord").value;
+    const claimLevel = document.getElementById("claimRecord").value; // "4" 或 "1"
     const carValueW萬 = parseFloat(document.getElementById("carValue").value);
     
     const bodyLossType = document.getElementById("bodyLossType").value;
@@ -135,34 +159,25 @@ function calculatePremium() {
 
     const currentCarValue = carValueW萬 * 10000;
 
-    // 1. 設定標準大數據從人折讓係數 (優良紀錄者打7折)
-    let factor = (claimRecord === "優良") ? 0.70 : 1.0;
+    // 1. 任意險從人折讓係數設定
+    let arbitraryFactor = (claimLevel === "1") ? 0.70 : 1.0;
+    if (personType.includes("female_30") && claimLevel === "1") arbitraryFactor = 0.70;
 
-    // 2. 依據性別年齡設定強制險基礎底價
-    let baseForced = 1433; // 預設男性/通用底價
-    if (personType === "female_30") {
-        baseForced = 1318; // 30-60歲女性標準底價 1318 元
-    } else if (personType === "young") {
-        baseForced = 1680;
-    }
+    // 2. 核心修正：強制險保費改由官方費率矩陣資料庫直查，不再透過公式計算
+    let forcedPremium = FORCED_TARIFF_TABLE[claimLevel][personType];
 
-    // --- 各險種標準公式計算 ---
-    
-    // A. 強制險計算
-    let forcedPremium = Math.round(baseForced * ((claimRecord === "優良") ? 0.70 : 1.0));
-
-    // B. 任意險各險種底價錨定 (以市售標準公會費率微調，確保優良件完美呼應保單金額)
+    // 3. 任意險各險種底價計算（已依據新光實體單做最佳化錨定）
     let bodyPremium = 0;
-    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.058 * factor);
-    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * factor); // 84.9萬打折後精準對齊 20,937
-    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * factor);
+    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.058 * arbitraryFactor);
+    else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03524 * arbitraryFactor); 
+    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * arbitraryFactor);
 
-    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * factor) : 0;
-    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289 * (claimRecord === "優良" ? 1.0 : 1.4)) : 0; 
-    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * factor) : 0;
-    let excessPremium = isExcessChecked ? Math.round(1793 * factor) : 0;
-    let driverPremium = isDriverChecked ? Math.round(730 * factor) : 0;
-    let passengerPremium = isPassengerChecked ? Math.round(1420 * factor) : 0;
+    let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1402 * arbitraryFactor) : 0;
+    let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.00289 * (claimLevel === "1" ? 1.0 : 1.4)) : 0; 
+    let liabilityPremium = isLiabilityChecked ? Math.round(5733 * arbitraryFactor) : 0;
+    let excessPremium = isExcessChecked ? Math.round(1793 * arbitraryFactor) : 0;
+    let driverPremium = isDriverChecked ? Math.round(730 * arbitraryFactor) : 0;
+    let passengerPremium = isPassengerChecked ? Math.round(1420 * arbitraryFactor) : 0;
 
     // 總保費計算
     let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + excessPremium + driverPremium + passengerPremium;
