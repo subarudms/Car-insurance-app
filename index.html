@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車險保費簡易試算器</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 500px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0px 0px 15px rgba(0,0,0,0.1); margin: 0 auto; }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        select, input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .checkbox-group { margin-top: 5px; }
+        button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #45a049; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #e7f3fe; border-left: 6px solid #2196F3; display: none; }
+        .disclaimer { font-size: 12px; color: #888; margin-top: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚗 車險保費簡易試算器</h2>
+    
+    <div class="form-group">
+        <label for="gender">被保險人性別：</label>
+        <select id="gender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="age">被保險人年齡：</label>
+        <input type="number" id="age" value="35" min="18" max="100">
+    </div>
+
+    <div class="form-group">
+        <label for="claimRecord">過去無肇事理賠紀錄：</label>
+        <select id="claimRecord">
+            <option value="0">新投保 / 去年有出險理賠</option>
+            <option value="1">連續 1 年無肇事</option>
+            <option value="2">連續 2 年無肇事</option>
+            <option value="3">連續 3 年以上無肇事</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>選擇投保項目（可多選）：</label>
+        <div class="checkbox-group">
+            <input type="checkbox" id="forced" checked disabled> <label style="display:inline;" for="forced">強制險 (政府規定必保)</label><br><br>
+            <input type="checkbox" id="liability" checked> <label style="display:inline;" for="liability">第三人責任險 (體傷300萬/財損50萬)</label><br><br>
+            <input type="checkbox" id="excess"> <label style="display:inline;" for="excess">超額責任險 (1000萬)</label><br><br>
+            <input type="checkbox" id="bodyLoss"> <label style="display:inline;" for="bodyLoss">車體損失險 (丙式-車碰車)</label>
+        </div>
+    </div>
+
+    <button onclick="calculatePremium()">開始試算保費</button>
+
+    <div id="result" class="result-box">
+        <h3>試算結果明細：</h3>
+        <p id="detailForced"></p>
+        <p id="detailLiability"></p>
+        <p id="detailExcess"></p>
+        <p id="detailBodyLoss"></p>
+        <hr>
+        <h4 id="totalAmount" style="color: #d9534f; margin: 0;"></h4>
+    </div>
+
+    <div class="disclaimer">
+        * 本畫面之試算結果僅供參考，實際保費仍須以產險公司核保、串接關貿系統查詢之金額為準。
+    </div>
+</div>
+
+</body>
+</html>
+<script>
+function calculatePremium() {
+    // 1. 讀取使用者輸入的資料
+    const gender = document.getElementById("gender").value;
+    const age = parseInt(document.getElementById("age").value);
+    const claimRecord = parseInt(document.getElementById("claimRecord").value);
+    
+    const isLiabilityChecked = document.getElementById("liability").checked;
+    const isExcessChecked = document.getElementById("excess").checked;
+    const isBodyLossChecked = document.getElementById("bodyLoss").checked;
+
+    // 2. 定義基本保費 (底價)
+    const BASE_FORCED_MALE = 1318;      // 強制險男性基本
+    const BASE_FORCED_FEMALE = 1211;    // 強制險女性基本
+    const BASE_LIABILITY = 3200;        // 第三人責任險基本
+    const BASE_EXCESS = 1500;           // 超額責任險固定基本
+    const BASE_BODY_LOSS = 6000;        // 丙式車體險估算底價
+
+    // 3. 根據年齡與性別判定「第三人責任險」的從人係數
+    let ageGenderFactor = 1.0; // 預設基準值
+
+    if (age < 20) {
+        ageGenderFactor = (gender === "male") ? 1.5 : 1.3;
+    } else if (age >= 20 && age < 25) {
+        ageGenderFactor = (gender === "male") ? 1.3 : 1.15;
+    } else if (age >= 25 && age < 30) {
+        ageGenderFactor = (gender === "male") ? 1.15 : 1.0;
+    } else if (age >= 30 && age < 60) {
+        ageGenderFactor = (gender === "male") ? 1.0 : 0.90; // 30~60歲女性最便宜
+    } else {
+        ageGenderFactor = (gender === "male") ? 1.1 : 1.0;
+    }
+
+    // 4. 根據勾選的無肇事紀錄判定「賠款紀錄係數」
+    let claimFactor = 1.0;
+    switch(claimRecord) {
+        case 1: claimFactor = 0.82; break; // 打 82 折
+        case 2: claimFactor = 0.74; break; // 打 74 折
+        case 3: claimFactor = 0.64; break; // 最低打 64 折
+        default: claimFactor = 1.0;        // 無折扣
+    }
+
+    // 5. 開始計算各險種保費
+    // 強制險 (簡單分類)
+    let forcedPremium = (gender === "male") ? BASE_FORCED_MALE : BASE_FORCED_FEMALE;
+    // 如果大於60歲或小於25歲，強制險微幅調整
+    if (age < 25 || age > 60) forcedPremium += 150;
+
+    // 第三人責任險 = 基本保費 * 年齡性別係數 * 肇事係數
+    let liabilityPremium = isLiabilityChecked ? Math.round(BASE_LIABILITY * ageGenderFactor * claimFactor) : 0;
+
+    // 超額責任險 = 基本保費 * 肇事係數 (通常不看性別年齡，只看肇事紀錄)
+    let excessPremium = isExcessChecked ? Math.round(BASE_EXCESS * claimFactor) : 0;
+
+    // 車體險 = 基本保費 * 肇事係數 (簡化邏輯)
+    let bodyLossPremium = isBodyLossChecked ? Math.round(BASE_BODY_LOSS * claimFactor) : 0;
+
+    // 總保費累加
+    let totalPremium = forcedPremium + liabilityPremium + excessPremium + bodyLossPremium;
+
+    // 6. 將結果渲染到網頁上
+    document.getElementById("detailForced").innerText = `1. 強制汽車責任險：$${forcedPremium.toLocaleString()} 元`;
+    document.getElementById("detailLiability").innerText = isLiabilityChecked ? `2. 第三人責任險：$${liabilityPremium.toLocaleString()} 元 (係數: ${ageGenderFactor} * ${claimFactor})` : `2. 第三人責任險：未投保`;
+    document.getElementById("detailExcess").innerText = isExcessChecked ? `3. 超額責任險 (1000萬)：$${excessPremium.toLocaleString()} 元` : `3. 超額責任險：未投保`;
+    document.getElementById("detailBodyLoss").innerText = isBodyLossChecked ? `4. 丙式車體損失險：$${bodyLossPremium.toLocaleString()} 元` : `4. 車體損失險：未投保`;
+    
+    document.getElementById("totalAmount").innerText = `預估總保費：$${totalPremium.toLocaleString()} 元 / 年`;
+    
+    // 顯示結果區塊
+    document.getElementById("result").style.display = "block";
+}
+</script>
