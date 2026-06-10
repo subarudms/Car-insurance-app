@@ -116,7 +116,7 @@
         <div class="checkbox-label"><strong>乘客體傷責任險 (200萬/800萬)</strong></div>
     </div>
 
-    <button onclick="calculatePremium()">開始精算保費</button>
+    <button onclick="calculatePremium()">開始試算保費</button>
 
     <div id="result" class="result-box">
         <h3>📊 精算保費明細</h3>
@@ -133,14 +133,14 @@
 </div>
 
 <script>
-// 車型資料庫 (自動對齊車價與車種屬性)
+// 車型資料庫
 const CAR_DATABASE = {
     "Swift": { price: 730000, type: "passenger" },
     "Scross": { price: 930000, type: "passenger" },
     "Vitara2WD": { price: 1040000, type: "passenger" },
     "EVitara2WD": { price: 1150000, type: "passenger" },
     "EVitara4WD": { price: 1230000, type: "passenger" },
-    "Carry": { price: 499000, type: "truck" } // 小貨車屬性
+    "Carry": { price: 499000, type: "truck" }
 };
 
 // 1. 交通部官方【自用小客車】強制險費率對照表
@@ -149,7 +149,7 @@ const FORCED_PASSENGER_TABLE = {
     "4": { "male_30": 1398, "female_30": 1318, "male_25": 1866, "female_25": 1457, "male_20": 2694, "female_20": 1926, "male_under20": 2893, "female_under20": 2056, "male_old": 1448, "female_old": 1188 }
 };
 
-// 2. 交通部官方【自用小貨車】強制險費率對照表 (完全對齊新貨車圖表)
+// 2. 交通部官方【自用小貨車】強制險費率對照表
 const FORCED_TRUCK_TABLE = {
     "1": { "male_30": 1266, "female_30": 1187, "male_25": 2143, "female_25": 1611, "male_20": 3199, "female_20": 2211, "male_under20": 3455, "female_under20": 2378, "male_old": 1357, "female_old": 1022 },
     "4": { "male_30": 1808, "female_30": 1696, "male_25": 3061, "female_25": 2301, "male_20": 4570, "female_20": 3158, "male_under20": 4935, "female_under20": 3397, "male_old": 1939, "female_old": 1460 }
@@ -177,7 +177,6 @@ function calculatePremium() {
     const isDriverChecked = document.getElementById("driver").checked;
     const isPassengerChecked = document.getElementById("passenger").checked;
 
-    // 從資料庫撈取特定車型的價格與客/貨車類型
     const carPrice = CAR_DATABASE[selectedModel].price;
     const carType = CAR_DATABASE[selectedModel].type;
 
@@ -186,33 +185,28 @@ function calculatePremium() {
         lookupKey = personType.includes("female") ? "female_old" : "male_old";
     }
 
-    // A. 依據客貨車種類，動態導向正確的強制險費率表
     let forcedPremium = 0;
     if (carType === "truck") {
-        forcedPremium = FORCED_TRUCK_TABLE[claimLevel][lookupKey] || 1696; // 完美對齊 Carry 30-59歲女性全新 $1,696
+        forcedPremium = FORCED_TRUCK_TABLE[claimLevel][lookupKey] || 1696;
     } else {
-        forcedPremium = FORCED_PASSENGER_TABLE[claimLevel][lookupKey] || 1318; // 完美對齊 Swift 30-59歲女性全新 $1,318
+        forcedPremium = FORCED_PASSENGER_TABLE[claimLevel][lookupKey] || 1318;
     }
 
-    // B. 提取任意險係數
     let ageGenderFactor = ARBITRARY_AGE_GENDER_TABLE[lookupKey] || 1.00;
     let claimFactor = (claimLevel === "1") ? 0.70 : 1.00;
 
-    // C. 依客貨車種設定不同的任意險費率基準
-    let isGoodRecord = (claimLevel === "1");
-    let bodyRateB = 0.03689;  // 預設客車乙式費率
-    let bodyRateC = 0.01851;  // 預設客車丙式費率
-    let baseBodyAdd = 1803;   // 預設客車附加險底價
-    let baseLiability = 6688; // 預設客車第三人底價
+    let bodyRateB = 0.03689;  
+    let bodyRateC = 0.01851;  
+    let baseBodyAdd = 1803;   
+    let baseLiability = 6688; 
 
     if (carType === "truck") {
-        bodyRateB = 0.0215;   // 貨車專屬乙式費率 (貨車車體主險實務上較便宜)
-        bodyRateC = 0.0110;   // 貨車專屬丙式費率
-        baseBodyAdd = 1200;   // 貨車附加險底價微調
-        baseLiability = 5800; // 貨車第三人責任險底價
+        bodyRateB = 0.0215;   
+        bodyRateC = 0.0110;   
+        baseBodyAdd = 1200;   
+        baseLiability = 5800; 
     }
 
-    // --- 任意險各險種公式精算 ---
     let bodyPremium = 0;
     if (bodyLossType === "A") bodyPremium = Math.round(carPrice * 0.054 * ageGenderFactor * claimFactor);
     else if (bodyLossType === "B") bodyPremium = Math.round(carPrice * bodyRateB * ageGenderFactor * claimFactor); 
@@ -222,15 +216,12 @@ function calculatePremium() {
     let theftPremium = isTheftChecked ? Math.round(carPrice * 0.002891) : 0; 
     let liabilityPremium = isLiabilityChecked ? Math.round(baseLiability * ageGenderFactor * claimFactor) : 0;
 
-    // 固定型附加險定價
     let excessPremium = isExcessChecked ? 1255 : 0;     
     let driverPremium = isDriverChecked ? 511 : 0;       
     let passengerPremium = isPassengerChecked ? 1009 : 0; 
 
-    // 總保費累加
     let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + excessPremium + driverPremium + passengerPremium;
 
-    // 渲染前端
     document.getElementById("resForced").innerText = `$${forcedPremium.toLocaleString()} 元`;
     document.getElementById("resBody").innerText = bodyPremium > 0 ? `$${bodyPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resBodyAdd").innerText = bodyAddPremium > 0 ? `$${bodyAddPremium.toLocaleString()} 元` : "未投保";
