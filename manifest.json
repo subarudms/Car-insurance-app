@@ -1,0 +1,16 @@
+{
+  "name": "車險保費簡易試算器",
+  "short_name": "車險試算",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#4CAF50",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/743/743714.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
