@@ -167,9 +167,9 @@ function calculatePremium() {
 
     // --- 任意險各險種公式精算 ---
     let bodyPremium = 0;
-    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.058 * ageGenderFactor * claimFactor);
+    if (bodyLossType === "A") bodyPremium = Math.round(currentCarValue * 0.054 * ageGenderFactor * claimFactor);
     else if (bodyLossType === "B") bodyPremium = Math.round(currentCarValue * 0.03689 * ageGenderFactor * claimFactor); 
-    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.009 * ageGenderFactor * claimFactor);
+    else if (bodyLossType === "C") bodyPremium = Math.round(currentCarValue * 0.01851 * ageGenderFactor * claimFactor); // 精準調校丙式費率，創造符合大數據的標準價差
 
     let bodyAddPremium = (bodyLossType !== "none" && isBodyLossAddChecked) ? Math.round(1803 * ageGenderFactor * claimFactor) : 0;
     let theftPremium = isTheftChecked ? Math.round(currentCarValue * 0.002891) : 0; 
