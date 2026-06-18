@@ -32,16 +32,22 @@
 <div class="container">
     <h2>🚗 汽車保險標準試算 APP</h2>
     
-    <div class="section-title">車輛選擇</div>
+    <div class="section-title">車輛選擇 (已依客/貨/電動車分類)</div>
     <div class="form-group">
         <label>選擇投保車型</label>
         <select id="carModel">
-            <option value="Swift">小客車：Swift (73 萬)</option>
-            <option value="Scross">小客車：S-cross 2WD (98 萬)</option>
-            <option value="Vitara2WD">小客車：Vitara 4WD (104 萬)</option>
-            <option value="EVitara2WD">小客車：E Vitara 2WD (115 萬)</option>
-            <option value="EVitara4WD">小客車：E Vitara 4WD (123 萬)</option>
-            <option value="Carry" selected>小貨車：Carry (49.9 萬)</option>
+            <optgroup label="【一般客車 (油車/油電)】">
+                <option value="Swift">Swift (73 萬)</option>
+                <option value="Scross">S-cross 2WD (93 萬)</option>
+                <option value="Vitara2WD">Vitara 4WD (104 萬)</option>
+            </optgroup>
+            <optgroup label="【電動車 (專屬條款)】">
+                <option value="EVitara2WD" selected>E Vitara 2WD (115 萬)</option>
+                <option value="EVitara4WD">E Vitara 4WD (123 萬)</option>
+            </optgroup>
+            <optgroup label="【小貨車】">
+                <option value="Carry">Carry (49.9 萬)</option>
+            </optgroup>
         </select>
     </div>
 
@@ -81,7 +87,7 @@
         <select id="bodyLossType">
             <option value="none">不投保車體險</option>
             <option value="A">甲式</option>
-            <option value="B" selected>乙式</option>
+            <option value="B" selected>乙式 (電動車自動帶入專用條款)</option>
             <option value="C">丙式</option>
         </select>
     </div>
@@ -98,7 +104,7 @@
 
     <div class="checkbox-container">
         <input type="checkbox" id="liability" checked>
-        <div class="checkbox-label"><strong>第三人責任險</strong><br><small>身故200萬/事故2000萬/財損50萬</small></div>
+        <div class="checkbox-label"><strong>第三人責任險</strong><br><small>身故200萬/事故2000萬/財損50萬 (電動車為100萬)</small></div>
     </div>
 
     <div class="checkbox-container">
@@ -113,49 +119,47 @@
 
     <div class="checkbox-container">
         <input type="checkbox" id="passenger" checked>
-        <div class="checkbox-label"><strong>乘客體傷責任險 (200萬/800萬)</strong></div>
+        <div class="checkbox-label"><strong>乘客體傷責任險</strong></div>
     </div>
 
     <button onclick="calculatePremium()">開始試算保費</button>
 
     <div id="result" class="result-box">
-        <h3>📊 精算保費明細</h3>
+        <h3>📊 精算保費明細 <span id="carTypeTag" style="font-size:12px; background:#2563eb; color:white; padding:2px 6px; border-radius:4px; float:right;"></span></h3>
         <div class="result-item"><span>1. 強制汽車責任險</span><span id="resForced">$0</span></div>
-        <div class="result-item"><span>2. 車體損失險 (主險)</span><span id="resBody">$0</span></div>
+        <div class="result-item"><span>2. 車體損失險 <span id="bodyTitle"></span></span><span id="resBody">$0</span></div>
         <div class="result-item"><span>3. 車體險附加條款 (免折舊/免追償)</span><span id="resBodyAdd">$0</span></div>
         <div class="result-item"><span>4. 汽車竊盜損失險 (含免折舊)</span><span id="resTheft">$0</span></div>
         <div class="result-item"><span>5. 第三人責任險 (體傷+財損)</span><span id="resLiability">$0</span></div>
-        <div class="result-item"><span>6. 第三人超額責任險 (1000萬)</span><span id="resExcess">$0</span></div>
-        <div class="result-item"><span>7. 駕駛人傷害險 (含醫療)</span><span id="resDriver">$0</span></div>
-        <div class="result-item"><span>8. 乘客體傷責任險</span><span id="resPassenger">$0</span></div>
+        <div class="result-item"><span style="color:#16a34a;" id="evAddTitle">6. 電動車專屬附加險 (B04-B07)</span><span id="resEvAdd" style="color:#16a34a;">$0</span></div>
+        <div class="result-item"><span>7. 第三人超額責任險 (1000萬)</span><span id="resExcess">$0</span></div>
+        <div class="result-item"><span>8. 駕駛人傷害險 (含醫療)</span><span id="resDriver">$0</span></div>
+        <div class="result-item"><span>9. 乘客體傷責任險</span><span id="resPassenger">$0</span></div>
         <div class="total-row"><span>預估年度總保費</span><span id="resTotal">$0</span></div>
     </div>
 </div>
 
 <script>
-// 車型資料庫
+// 車型資料庫 (區分一般客車、電動車、貨車)
 const CAR_DATABASE = {
     "Swift": { price: 730000, type: "passenger" },
     "Scross": { price: 930000, type: "passenger" },
     "Vitara2WD": { price: 1040000, type: "passenger" },
-    "EVitara2WD": { price: 1150000, type: "passenger" },
-    "EVitara4WD": { price: 1230000, type: "passenger" },
+    "EVitara2WD": { price: 1150000, type: "ev" }, // 電動車
+    "EVitara4WD": { price: 1230000, type: "ev" }, // 電動車
     "Carry": { price: 499000, type: "truck" }
 };
 
-// 1. 交通部官方【自用小客車】強制險費率對照表
 const FORCED_PASSENGER_TABLE = {
     "1": { "male_30": 1099, "female_30": 1019, "male_25": 1567, "female_25": 1158, "male_20": 2395, "female_20": 1627, "male_under20": 2594, "female_under20": 1757, "male_old": 1148, "female_old": 889 },
     "4": { "male_30": 1398, "female_30": 1318, "male_25": 1866, "female_25": 1457, "male_20": 2694, "female_20": 1926, "male_under20": 2893, "female_under20": 2056, "male_old": 1448, "female_old": 1188 }
 };
 
-// 2. 交通部官方【自用小貨車】強制險費率對照表
 const FORCED_TRUCK_TABLE = {
     "1": { "male_30": 1266, "female_30": 1187, "male_25": 2143, "female_25": 1611, "male_20": 3199, "female_20": 2211, "male_under20": 3455, "female_under20": 2378, "male_old": 1357, "female_old": 1022 },
     "4": { "male_30": 1808, "female_30": 1696, "male_25": 3061, "female_25": 2301, "male_20": 4570, "female_20": 3158, "male_under20": 4935, "female_under20": 3397, "male_old": 1939, "female_old": 1460 }
 };
 
-// 3. 產險公會標準任意險「年齡性別係數表」
 const ARBITRARY_AGE_GENDER_TABLE = {
     "male_under20": 1.89,   "female_under20": 1.70,
     "male_20": 1.74,        "female_20": 1.57,
@@ -185,28 +189,33 @@ function calculatePremium() {
         lookupKey = personType.includes("female") ? "female_old" : "male_old";
     }
 
-    let forcedPremium = 0;
-    if (carType === "truck") {
-        forcedPremium = FORCED_TRUCK_TABLE[claimLevel][lookupKey] || 1696;
-    } else {
-        forcedPremium = FORCED_PASSENGER_TABLE[claimLevel][lookupKey] || 1318;
-    }
+    // 強制險判定 (電動車與客車使用同一張表)
+    let forcedPremium = (carType === "truck") ? (FORCED_TRUCK_TABLE[claimLevel][lookupKey] || 1696) : (FORCED_PASSENGER_TABLE[claimLevel][lookupKey] || 1318);
 
     let ageGenderFactor = ARBITRARY_AGE_GENDER_TABLE[lookupKey] || 1.00;
     let claimFactor = (claimLevel === "1") ? 0.70 : 1.00;
 
+    // 費率基準設定
+    let isGoodRecord = (claimLevel === "1");
     let bodyRateB = 0.03689;  
     let bodyRateC = 0.01851;  
     let baseBodyAdd = 1803;   
-    let baseLiability = 6688; 
+    let baseLiability = 6688; // 預設客車第三人 (身故200萬/財損50萬)
 
+    // 分流調整
     if (carType === "truck") {
         bodyRateB = 0.0215;   
         bodyRateC = 0.0110;   
         baseBodyAdd = 1200;   
         baseLiability = 5800; 
+    } else if (carType === "ev") {
+        // 電動車專屬主險費率調校 (根據保單精準反推)
+        bodyRateB = 0.03610;  
+        baseBodyAdd = 1923;   
+        baseLiability = 6888; // 電動車專屬第三人責任險底價 (包含財損提高至100萬)
     }
 
+    // --- 任意險各險種計算 ---
     let bodyPremium = 0;
     if (bodyLossType === "A") bodyPremium = Math.round(carPrice * 0.054 * ageGenderFactor * claimFactor);
     else if (bodyLossType === "B") bodyPremium = Math.round(carPrice * bodyRateB * ageGenderFactor * claimFactor); 
@@ -216,17 +225,39 @@ function calculatePremium() {
     let theftPremium = isTheftChecked ? Math.round(carPrice * 0.002891) : 0; 
     let liabilityPremium = isLiabilityChecked ? Math.round(baseLiability * ageGenderFactor * claimFactor) : 0;
 
+    // 電動車專屬附加條款費用 (B04 + B05 + B06 + B07)
+    let evAddPremium = 0;
+    if (carType === "ev" && bodyLossType !== "none") {
+        // 精準對齊保單：115萬車型固定規費約 $2,351；123萬車型固定規費約 $2,502
+        evAddPremium = (selectedModel === "EVitara2WD") ? (isGoodRecord ? 1645 : 2351) : (isGoodRecord ? 1751 : 2502);
+    }
+
+    // 固定型險種
     let excessPremium = isExcessChecked ? 1255 : 0;     
     let driverPremium = isDriverChecked ? 511 : 0;       
-    let passengerPremium = isPassengerChecked ? 1009 : 0; 
+    let passengerPremium = isPassengerChecked ? (carType === "ev" ? 1009 : 1009) : 0; 
 
-    let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + excessPremium + driverPremium + passengerPremium;
+    let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + evAddPremium + excessPremium + driverPremium + passengerPremium;
 
+    // UI標籤更新
+    document.getElementById("carTypeTag").innerText = carType === "ev" ? "電動車條款適用" : (carType === "truck" ? "貨車條款適用" : "客車條款適用");
+    document.getElementById("bodyTitle").innerText = carType === "ev" ? "(電動車專用)" : "";
+    
+    // 渲染資料
     document.getElementById("resForced").innerText = `$${forcedPremium.toLocaleString()} 元`;
     document.getElementById("resBody").innerText = bodyPremium > 0 ? `$${bodyPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resBodyAdd").innerText = bodyAddPremium > 0 ? `$${bodyAddPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resTheft").innerText = theftPremium > 0 ? `$${theftPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resLiability").innerText = liabilityPremium > 0 ? `$${liabilityPremium.toLocaleString()} 元` : "未投保";
+    
+    // 顯示或隱藏電動車附加險欄位
+    if (carType === "ev" && bodyLossType !== "none") {
+        document.getElementById("resEvAdd").parentElement.style.display = "flex";
+        document.getElementById("resEvAdd").innerText = `$${evAddPremium.toLocaleString()} 元`;
+    } else {
+        document.getElementById("resEvAdd").parentElement.style.display = "none";
+    }
+
     document.getElementById("resExcess").innerText = excessPremium > 0 ? `$${excessPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resDriver").innerText = driverPremium > 0 ? `$${driverPremium.toLocaleString()} 元` : "未投保";
     document.getElementById("resPassenger").innerText = passengerPremium > 0 ? `$${passengerPremium.toLocaleString()} 元` : "未投保";
