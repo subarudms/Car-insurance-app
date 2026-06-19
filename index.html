@@ -19,12 +19,17 @@
         .checkbox-container { background: #f8fafc; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; }
         .checkbox-container input[type="checkbox"] { width: auto; margin-right: 12px; transform: scale(1.2); }
         .checkbox-label { flex: 1; font-size: 13px; color: #334155; line-height: 1.3; }
-        button { width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        button:hover { background-color: #1d4ed8; }
+        
+        /* 雙按鈕排版與美化 */
+        .btn-group { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-calc { flex: 1; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-calc:hover { background-color: #1d4ed8; }
+        .btn-return { flex: 1; padding: 14px; background-color: #10b981; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-return:hover { background-color: #059669; }
+
         .result-box { margin-top: 20px; padding: 15px; background-color: #eff6ff; border-left: 6px solid #2563eb; border-radius: 8px; display: none; }
         .result-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #334155; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px; }
         .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #2563eb; margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 12px; }
-        .disclaimer { font-size: 11px; color: #94a3b8; margin-top: 20px; text-align: center; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -122,7 +127,10 @@
         <div class="checkbox-label"><strong>乘客體傷責任險</strong></div>
     </div>
 
-    <button onclick="calculatePremiumAndReturn()">確認險種並帶回購車選單 ↩</button>
+    <div class="btn-group">
+        <button class="btn-calc" onclick="justCalculateOnly()">🔍 直接試算呈現</button>
+        <button class="btn-return" onclick="calculateAndReturnToMenu()">🟢 確認並帶回選單</button>
+    </div>
 
     <div id="result" class="result-box">
         <h3>📊 精算保費明細 <span id="carTypeTag" style="font-size:12px; background:#2563eb; color:white; padding:2px 6px; border-radius:4px; float:right;"></span></h3>
@@ -167,11 +175,11 @@ const ARBITRARY_AGE_GENDER_TABLE = {
     "male_old": 1.07,       "female_old": 0.96 
 };
 
-function calculatePremiumAndReturn() {
+// 核心精算基礎引擎
+function coreInsuranceEngine() {
     const selectedModel = document.getElementById("carModel").value;
     const personType = document.getElementById("personType").value;
     const claimLevel = document.getElementById("claimRecord").value; 
-    
     const bodyLossType = document.getElementById("bodyLossType").value;
     const isBodyLossAddChecked = document.getElementById("bodyLossAdd").checked;
     const isTheftChecked = document.getElementById("theft").checked;
@@ -184,25 +192,17 @@ function calculatePremiumAndReturn() {
     const carType = CAR_DATABASE[selectedModel].type;
 
     let lookupKey = personType;
-    if (personType.includes("old")) {
-        lookupKey = personType.includes("female") ? "female_old" : "male_old";
-    }
+    if (personType.includes("old")) { lookupKey = personType.includes("female") ? "female_old" : "male_old"; }
 
     let forcedPremium = (carType === "truck") ? (FORCED_TRUCK_TABLE[claimLevel][lookupKey] || 1696) : (FORCED_PASSENGER_TABLE[claimLevel][lookupKey] || 1318);
     let ageGenderFactor = ARBITRARY_AGE_GENDER_TABLE[lookupKey] || 1.00;
     let claimFactor = (claimLevel === "1") ? 0.70 : 1.00;
 
     let isGoodRecord = (claimLevel === "1");
-    let bodyRateB = 0.03689;  
-    let bodyRateC = 0.01851;  
-    let baseBodyAdd = 1803;   
-    let baseLiability = 6688; 
+    let bodyRateB = 0.03689, bodyRateC = 0.01851, baseBodyAdd = 1803, baseLiability = 6688; 
 
-    if (carType === "truck") {
-        bodyRateB = 0.0215; bodyRateC = 0.0110; baseBodyAdd = 1200; baseLiability = 5800; 
-    } else if (carType === "ev") {
-        bodyRateB = 0.03610; baseBodyAdd = 1923; baseLiability = 6888; 
-    }
+    if (carType === "truck") { bodyRateB = 0.0215; bodyRateC = 0.0110; baseBodyAdd = 1200; baseLiability = 5800; } 
+    else if (carType === "ev") { bodyRateB = 0.03610; baseBodyAdd = 1923; baseLiability = 6888; }
 
     let bodyPremium = 0;
     if (bodyLossType === "A") bodyPremium = Math.round(carPrice * 0.054 * ageGenderFactor * claimFactor);
@@ -228,21 +228,53 @@ function calculatePremiumAndReturn() {
     if (bodyLossType !== 'none') {
         let codeName = (bodyLossType === 'A') ? '甲式' : ((bodyLossType === 'B') ? '乙式' : '丙式');
         insuranceNameParts.push(carType === 'ev' ? `${codeName}(電動車專用)` : `${codeName}車體險`);
-    } else {
-        insuranceNameParts.push('強制+第三人責任險');
-    }
+    } else { insuranceNameParts.push('強制+第三人'); }
     if (isExcessChecked) insuranceNameParts.push('超額1000萬');
     let finalInsuranceNameString = insuranceNameParts.join('+');
 
+    return { totalPremium, finalInsuranceNameString, forcedPremium, bodyPremium, bodyAddPremium, theftPremium, liabilityPremium, evAddPremium, excessPremium, driverPremium, passengerPremium, carType, selectedModel, bodyLossType };
+}
+
+// 按鈕一：🔍 點選只在下方展開呈現明細（不跳走、留在原頁）
+function justCalculateOnly() {
+    const data = coreInsuranceEngine();
+
+    document.getElementById("carTypeTag").innerText = data.carType === "ev" ? "電動車條款適用" : (data.carType === "truck" ? "貨車條款適用" : "客車條款適用");
+    document.getElementById("bodyTitle").innerText = data.carType === "ev" ? "(電動車專用)" : "";
+    
+    document.getElementById("resForced").innerText = `$${data.forcedPremium.toLocaleString()} 元`;
+    document.getElementById("resBody").innerText = data.bodyPremium > 0 ? `$${data.bodyPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resBodyAdd").innerText = data.bodyAddPremium > 0 ? `$${data.bodyAddPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resTheft").innerText = data.theftPremium > 0 ? `$${data.theftPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resLiability").innerText = data.liabilityPremium > 0 ? `$${data.liabilityPremium.toLocaleString()} 元` : "未投保";
+    
+    if (data.carType === "ev" && data.bodyLossType !== "none") {
+        document.getElementById("resEvAdd").parentElement.style.display = "flex";
+        document.getElementById("resEvAdd").innerText = `$${data.evAddPremium.toLocaleString()} 元`;
+    } else { document.getElementById("resEvAdd").parentElement.style.display = "none"; }
+
+    document.getElementById("resExcess").innerText = data.excessPremium > 0 ? `$${data.excessPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resDriver").innerText = data.driverPremium > 0 ? `$${data.driverPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resPassenger").innerText = data.passengerPremium > 0 ? `$${data.passengerPremium.toLocaleString()} 元` : "未投保";
+    document.getElementById("resTotal").innerText = `$${data.totalPremium.toLocaleString()} 元`;
+
+    document.getElementById("result").style.display = "block";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+// 按鈕二：🟢 帶回資料並全自動閃退回購車主網單
+function calculateAndReturnToMenu() {
+    const data = coreInsuranceEngine();
+    
     let stateObj = {};
     const parentState = localStorage.getItem('suzuki_cart_state');
     if (parentState) { stateObj = JSON.parse(parentState); }
     
-    stateObj.insuranceType = finalInsuranceNameString;
-    stateObj.insuranceAmount = totalPremium;
+    stateObj.insuranceType = data.finalInsuranceNameString;
+    stateObj.insuranceAmount = data.totalPremium;
     localStorage.setItem('suzuki_cart_state', JSON.stringify(stateObj));
 
-    // ↩ 🛠️【精準破除快取跳轉】：強制帶入 from=insurance 參數，讓 Car-menu 主選單能辨識並全自動開窗！
+    // ↩ 精準閃退帶回 Car-menu 專案首頁，並附帶開窗與破壞快取參數
     window.location.href = "https://subarudms.github.io/Car-menu/?from=insurance&v=" + new Date().getTime();
 }
 </script>
