@@ -242,8 +242,8 @@ function calculatePremiumAndReturn() {
     stateObj.insuranceAmount = totalPremium;
     localStorage.setItem('suzuki_cart_state', JSON.stringify(stateObj));
 
-    // ↩ 🛠️ 終極修復亮點：網址精準導向 /Car-menu/，並加掛時間快取破壞參數，絕對不再走錯路！
-    window.location.href = "https://subarudms.github.io/Car-menu/?v=" + new Date().getTime();
+    // ↩ 🛠️【精準破除快取跳轉】：強制帶入 from=insurance 參數，讓 Car-menu 主選單能辨識並全自動開窗！
+    window.location.href = "https://subarudms.github.io/Car-menu/?from=insurance&v=" + new Date().getTime();
 }
 </script>
 </body>
