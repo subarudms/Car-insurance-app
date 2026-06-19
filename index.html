@@ -167,7 +167,6 @@ const ARBITRARY_AGE_GENDER_TABLE = {
     "male_old": 1.07,       "female_old": 0.96 
 };
 
-// 🛠️ 將原本的計算抽出來，並加上儲存跳轉功能
 function calculatePremiumAndReturn() {
     const selectedModel = document.getElementById("carModel").value;
     const personType = document.getElementById("personType").value;
@@ -225,7 +224,6 @@ function calculatePremiumAndReturn() {
 
     let totalPremium = forcedPremium + bodyPremium + bodyAddPremium + theftPremium + liabilityPremium + evAddPremium + excessPremium + driverPremium + passengerPremium;
 
-    // 🌟 核心串接亮點：整合險種稱呼文字描述
     let insuranceNameParts = [];
     if (bodyLossType !== 'none') {
         let codeName = (bodyLossType === 'A') ? '甲式' : ((bodyLossType === 'B') ? '乙式' : '丙式');
@@ -236,17 +234,18 @@ function calculatePremiumAndReturn() {
     if (isExcessChecked) insuranceNameParts.push('超額1000萬');
     let finalInsuranceNameString = insuranceNameParts.join('+');
 
-    // 🌟 使用快取雙向傳輸：將算出來的金額與險種暫存進手機快取中
+    // 🌟 核心同步修復：先讀取並完整保存購車選單原本的所有暫存內容，只蓋寫保險欄位
+    let stateObj = {};
     const parentState = localStorage.getItem('suzuki_cart_state');
     if (parentState) {
-        const stateObj = JSON.parse(parentState);
-        stateObj.insuranceType = finalInsuranceNameString;
-        stateObj.insuranceAmount = totalPremium;
-        localStorage.setItem('suzuki_cart_state', JSON.stringify(stateObj));
+        stateObj = JSON.parse(parentState);
     }
+    stateObj.insuranceType = finalInsuranceNameString;
+    stateObj.insuranceAmount = totalPremium;
+    localStorage.setItem('suzuki_cart_state', JSON.stringify(stateObj));
 
-    // ↩ 自動閃退帶回購車主選單 App 網頁
-    window.location.href = "https://subarudms.github.io/Suzuki-/";
+    // ↩ 🛠️ 核心跳轉修復：尾端強制加上 index.html，確保精準回歸購車主頁，不衝去貸款頁面！
+    window.location.href = "https://subarudms.github.io/Suzuki-/index.html";
 }
 </script>
 </body>
