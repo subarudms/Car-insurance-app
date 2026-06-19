@@ -234,7 +234,7 @@ function calculatePremiumAndReturn() {
     if (isExcessChecked) insuranceNameParts.push('超額1000萬');
     let finalInsuranceNameString = insuranceNameParts.join('+');
 
-    // 🌟 核心同步修復：先讀取並完整保存購車選單原本的所有暫存內容，只蓋寫保險欄位
+    // 🌟 先讀取購車選單原有的暫存狀態，只覆蓋保險相關的數值
     let stateObj = {};
     const parentState = localStorage.getItem('suzuki_cart_state');
     if (parentState) {
@@ -244,8 +244,8 @@ function calculatePremiumAndReturn() {
     stateObj.insuranceAmount = totalPremium;
     localStorage.setItem('suzuki_cart_state', JSON.stringify(stateObj));
 
-    // ↩ 🛠️ 核心跳轉修復：尾端強制加上 index.html，確保精準回歸購車主頁，不衝去貸款頁面！
-    window.location.href = "https://subarudms.github.io/Suzuki-/index.html";
+    // ↩ 🛠️ 強效破除瀏覽器快取跳轉法：尾端強制加上時間戳記，確保直接退回最新購車主網頁！
+    window.location.href = "https://subarudms.github.io/Suzuki-/index.html?v=" + new Date().getTime();
 }
 </script>
 </body>
